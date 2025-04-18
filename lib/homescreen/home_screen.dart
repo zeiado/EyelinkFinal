@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_tts/flutter_tts.dart'; // استيراد مكتبة Text-to-Speech
-import 'package:untitled1/help/RequestHelp.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:untitled1/how_to_use/Tutorial.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -10,145 +9,209 @@ class HomeScreen extends StatefulWidget {
   _HomeScreenState createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   final FlutterTts flutterTts = FlutterTts();
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
 
-  // دالة لتحويل النص إلى صوت
-  void _speak(String text) async {
-    await flutterTts.setLanguage("en-us");  // تعيين اللغة الإنجليزية
-    await flutterTts.setPitch(1.0); // تعيين درجة الصوت (اختياري)
-    await flutterTts.setSpeechRate(0.5); // تعيين سرعة الصوت (اختياري)
-    await flutterTts.speak(text); // تحويل النص إلى صوت
+  @override
+  void initState() {
+    super.initState();
+    _initializeTTS();
+    _setupAnimations();
+    _speakWelcome();
+  }
+
+  void _setupAnimations() {
+    _animationController = AnimationController(
+      duration: const Duration(seconds: 1),
+      vsync: this,
+    );
+
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeIn,
+    ));
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.5),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOut,
+    ));
+
+    _animationController.forward();
+  }
+
+  Future<void> _initializeTTS() async {
+    await flutterTts.setLanguage("en-US");
+    await flutterTts.setPitch(1.0);
+    await flutterTts.setSpeechRate(0.5);
+  }
+
+  void _speakWelcome() async {
+    await _speak("Welcome to Eyelink! Double tap anywhere to hear instructions.");
+  }
+
+  Future<void> _speak(String text) async {
+    await flutterTts.speak(text);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF153349), // لون الخلفية
-      body: Column(
+      backgroundColor: const Color(0xFF153349),
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: SlideTransition(
+          position: _slideAnimation,
+          child: SafeArea(
+            child: Column(
+              children: [
+                _buildHeader(),
+                _buildWelcomeSection(),
+                const Spacer(),
+                _buildTutorialButton(),
+                const SizedBox(height: 40),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Hero(
+        tag: 'app_logo',
+        child: Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xffADE0EB).withOpacity(0.3),
+                blurRadius: 20,
+                spreadRadius: 5,
+              ),
+            ],
+          ),
+          child: Image.asset(
+            'assets/images/logo.png',
+            width: 120,
+            height: 120,
+            fit: BoxFit.contain,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWelcomeSection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
         children: [
-          Expanded(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Image.asset('assets/images/logo.png', // استبدل بمسار الصورة الصحيح
-                width: 100,
-                height: 100,
-                fit: BoxFit.cover, // لضبط حجم الصورة
-                ),
-                  const SizedBox(height: 10),
-                  GestureDetector(
-                    onTap: () {
-                      _speak("Welcome to Eyelink!");
-                    },
-                    child: Semantics(
-                      label: 'Welcome to Eyelink',
-                      child: const Text(
-                        "Welcome to Eyelink!",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: GestureDetector(
-                      onTap: () {
-                        _speak(" We are here to help you navigate the world with ease. Whether it's reading, identifying objects, or just getting assistance, our AI and volunteers are ready to assist you.");
-                      },
-                      child: Semantics(
-                        label: "Text: We are here to help you navigate the world with ease. Whether it's reading, identifying objects, or just getting assistance, our AI and volunteers are ready to assist you.",
-                        child: const Text(
-                          "We're here to help you navigate the world with ease. Whether it's reading, identifying objects, or just getting assistance, our AI and volunteers are ready to assist you.",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 16, color: Colors.white70),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+          GestureDetector(
+            onTap: () => _speak("Welcome to Eyelink!"),
+            child: const Text(
+              "Welcome to Eyelink!",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: Color(0xffADE0EB),
               ),
             ),
           ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-              child: GestureDetector(
-                onTap: () {
-                  _speak("DoubleTap to Request Help");
-                },
-                onDoubleTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const RequestHelp()),
-                  );
-                },
-                child: SizedBox(
-                  width: double.infinity,
-                  height: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                    ),
-                    onPressed: null, // تعطيل onPressed لأننا نستخدم GestureDetector
-                    child: const Text(
-                      "Request Help",
-                      style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
-                    ),
-                  ),
-                ),
-              ),
+          const SizedBox(height: 20),
+          GestureDetector(
+            onTap: () => _speak(
+              "We are here to help you navigate the world with ease. Let's start with a tutorial to learn how to use the app.",
             ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-              child: GestureDetector(
-                onTap: () {
-                  _speak("DoubleTap to know How to Use");
-                },
-                onDoubleTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => Tutorial()),
-                  );
-                },
-                child: SizedBox(
-                  width: double.infinity,
-                  height: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                    ),
-                    onPressed: null, // تعطيل onPressed لأننا نستخدم GestureDetector
-                    child: const Text(
-                      "Tutorial / How to Use",
-                      style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
-                    ),
-                  ),
-                ),
+            child: Text(
+              "We're here to help you navigate the world with ease. Let's start with a tutorial to learn how to use the app.",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 18,
+                height: 1.5,
+                color: Colors.white.withOpacity(0.8),
               ),
             ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildTutorialButton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: GestureDetector(
+        onTap: () => _speak("Double tap to start the tutorial"),
+        onDoubleTap: () {
+          _speak("Opening tutorial");
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const Tutorial()),
+          );
+        },
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          decoration: BoxDecoration(
+            color: const Color(0xffADE0EB),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xffADE0EB).withOpacity(0.3),
+                blurRadius: 15,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.school_outlined,
+                size: 40,
+                color: Color(0xFF153349),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                "Start Tutorial",
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF153349),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                "Double tap to begin",
+                style: TextStyle(
+                  fontSize: 16,
+                  color: const Color(0xFF153349).withOpacity(0.7),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    flutterTts.stop();
+    _animationController.dispose();
+    super.dispose();
   }
 }

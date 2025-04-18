@@ -1,2 +1,0 @@
-D:/flutter project graduation/Login_SignUp-master/android/app/.cxx/Debug/261252a6/x86_64/CMakeFiles/edit_cache.dir
-D:/flutter project graduation/Login_SignUp-master/android/app/.cxx/Debug/261252a6/x86_64/CMakeFiles/rebuild_cache.dir

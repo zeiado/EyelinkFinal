@@ -115,7 +115,7 @@ class _PrivacyTermsState extends State<PrivacyTerms> {
                 if (_isAgreed) {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => CommunityScreen()),
+                    MaterialPageRoute(builder: (context) => const CommunityScreen()),
                   );
                 } else {
                   _speak("You must agree to the terms and privacy policy.");

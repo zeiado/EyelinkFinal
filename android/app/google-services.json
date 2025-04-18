@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "1023022915628",
+    "project_id": "eyelink-5eddc",
+    "storage_bucket": "eyelink-5eddc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1023022915628:android:f0c477e4ed5c746ef5b189",
+        "android_client_info": {
+          "package_name": "com.example.untitled1"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1023022915628-eqcf3n394h9s1m5demc9kkgvefqrsb84.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.untitled1",
+            "certificate_hash": "ee22431dfd0647339acce5d05bb55dc320802582"
+          }
+        },
+        {
+          "client_id": "1023022915628-epcedtrefu0rtrvha7k4iaspmfo7p0mt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBQEZ4maStUGHPbUlsPoREfCg_WdWysPOw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1023022915628-epcedtrefu0rtrvha7k4iaspmfo7p0mt.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1023022915628-a2e49nul5irrhm7uf28jij8ise43speb.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.untitled1"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

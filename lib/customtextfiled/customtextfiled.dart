@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-
 import '../responsive/responsive.dart';
 
 class CustomTextField extends StatefulWidget {
@@ -10,6 +9,8 @@ class CustomTextField extends StatefulWidget {
   final Icon icon;
   final String? Function(String?)? validator;
   final TextEditingController controller;
+  final VoidCallback? onTap;
+  final VoidCallback? onDoubleTap;
 
   const CustomTextField({
     super.key,
@@ -19,6 +20,8 @@ class CustomTextField extends StatefulWidget {
     this.isPassword = false,
     this.validator,
     required this.controller,
+    this.onTap,
+    this.onDoubleTap,
   });
 
   @override
@@ -30,7 +33,6 @@ class _CustomTextFieldState extends State<CustomTextField> {
   late FocusNode _focusNode;
   Color _iconColor = Colors.grey;
 
-
   @override
   void initState() {
     super.initState();
@@ -41,92 +43,115 @@ class _CustomTextFieldState extends State<CustomTextField> {
       });
     });
   }
-  double TextSize(context,{required double isExtraSmallSize , required double isMobileSize,required double isMobileLarge,required double isIpadSize,required double isTabletSize,required double isLargeTabletSize,required double defaultSize} ){ return Responsive.isExtraSmall(context) ? isExtraSmallSize :
-  Responsive.isMobile(context) ?isMobileSize:
-  Responsive.isMobileLarge(context) ? isMobileLarge:
-  Responsive.isIpad(context) ? isIpadSize:
-  Responsive.isTablet(context) ? isTabletSize :
-  Responsive.isLargeTablet(context) ? isLargeTabletSize : isLargeTabletSize;}
+
+  double TextSize(BuildContext context,
+      {required double isExtraSmallSize,
+      required double isMobileSize,
+      required double isMobileLarge,
+      required double isIpadSize,
+      required double isTabletSize,
+      required double isLargeTabletSize,
+      required double defaultSize}) {
+    return Responsive.isExtraSmall(context)
+        ? isExtraSmallSize
+        : Responsive.isMobile(context)
+            ? isMobileSize
+            : Responsive.isMobileLarge(context)
+                ? isMobileLarge
+                : Responsive.isIpad(context)
+                    ? isIpadSize
+                    : Responsive.isTablet(context)
+                        ? isTabletSize
+                        : Responsive.isLargeTablet(context)
+                            ? isLargeTabletSize
+                            : defaultSize;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          height: widget.height * .01,
-        ),
-        Container(
-          decoration: BoxDecoration(
-            border:Border.all(color:const Color(0xffA3D1D7) ) ,
-            gradient: const LinearGradient(
-
-              colors: [Color(0xffA3D1D7), Color(0xff46919B),Color(0xff82D6E1)], // Gradient colors
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+    return GestureDetector(
+      onTap: widget.onTap,
+      onDoubleTap: widget.onDoubleTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            height: widget.height,
+            decoration: BoxDecoration(
+              border: Border.all(color: const Color(0xffA3D1D7)),
+              gradient: const LinearGradient(
+                colors: [Color(0xffA3D1D7), Color(0xff46919B), Color(0xff82D6E1)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(15),
             ),
-            borderRadius: BorderRadius.circular(15), // Same border radius as the TextFormField
-          ),
-          child: TextFormField(
-            obscureText: _obscureText && widget.isPassword,
-            enabled: true,
-            validator: widget.validator,
-            focusNode: _focusNode,
-            controller: widget.controller,
-            style: TextStyle(
-              fontSize: TextSize(
-                context,
-                isExtraSmallSize: 16,
-                isMobileSize: 20,
-                isMobileLarge: 24,
-                isIpadSize: 30,
-                isTabletSize: 36,
-                isLargeTabletSize: 42,
-                defaultSize: 22,
+            child: TextFormField(
+              obscureText: _obscureText && widget.isPassword,
+              enabled: true,
+              validator: widget.validator,
+              focusNode: _focusNode,
+              controller: widget.controller,
+              style: TextStyle(
+                fontSize: TextSize(
+                  context,
+                  isExtraSmallSize: 16,
+                  isMobileSize: 20,
+                  isMobileLarge: 24,
+                  isIpadSize: 30,
+                  isTabletSize: 36,
+                  isLargeTabletSize: 42,
+                  defaultSize: 22,
+                ),
               ),
-            ),
-            cursorHeight: 24,
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: Colors.white, // Background color for the inner field
-              hintText: "Enter ${widget.text}",
-              hintStyle: TextStyle(color: _iconColor, fontSize: 18),
-              contentPadding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 16.0),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(15),
-                borderSide: BorderSide.none, // Remove default border
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(15),
-                borderSide: BorderSide.none, // No default border
-              ),
-              prefixIcon: Icon(
-                widget.icon.icon,
-                size: 28,
-                color: _iconColor,
-              ),
-              suffixIcon: widget.isPassword
-                  ? IconButton(
-                onPressed: () {
-                  setState(() {
-                    _obscureText = !_obscureText;
-                  });
-                },
-                icon: Icon(
-                  _obscureText
-                      ? CupertinoIcons.eye
-                      : CupertinoIcons.eye_slash,
-                  size: 24,
+              cursorHeight: 24,
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: Colors.white,
+                hintText: "Enter ${widget.text}",
+                hintStyle: TextStyle(color: _iconColor, fontSize: 18),
+                contentPadding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 16.0),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide.none,
+                ),
+                prefixIcon: Icon(
+                  widget.icon.icon,
+                  size: 28,
                   color: _iconColor,
                 ),
-              )
-                  : null,
+                suffixIcon: widget.isPassword
+                    ? IconButton(
+                        onPressed: () {
+                          setState(() {
+                            _obscureText = !_obscureText;
+                          });
+                        },
+                        icon: Icon(
+                          _obscureText
+                              ? CupertinoIcons.eye
+                              : CupertinoIcons.eye_slash,
+                          size: 24,
+                          color: _iconColor,
+                        ),
+                      )
+                    : null,
+              ),
+              cursorColor: const Color(0xff0186c7),
             ),
-            cursorColor: const Color(0xff0186c7),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
 }

@@ -1,133 +1,141 @@
+// community_screen.dart
+
 import 'package:flutter/material.dart';
-import 'package:flutter_tts/flutter_tts.dart';
-import 'package:untitled1/volunteer/volunteer.dart';
-import 'package:untitled1/need_help/need_help.dart';
-
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:untitled1/services/realtime_database_service.dart';
+import 'package:untitled1/need_help/need_help.dart'; // Add this import
+import 'package:untitled1/volunteer/volunteer.dart'; // Add this import
 class CommunityScreen extends StatelessWidget {
-  final FlutterTts flutterTts = FlutterTts();
+  const CommunityScreen({super.key});
 
-  CommunityScreen({super.key});
-
-  // دالة لتحويل النص إلى صوت
-  void _speak(String text) async {
-    await flutterTts.setLanguage("en-US");
-    await flutterTts.setPitch(1.0);
-    await flutterTts.setSpeechRate(0.5);
-    await flutterTts.speak(text);
-  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF153349), // لون الخلفية
-      body: Column(
-        children: [
-          Expanded(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Image.asset('assets/images/logo.png', // استبدل بمسار الصورة الصحيح
-                width: 140,
-                height: 140,
-                fit: BoxFit.cover, // لضبط حجم الصورة
-                ),
-                  const SizedBox(height: 10),
-                  GestureDetector(
-                    onTap: () {
-                      _speak("Join the community.\nSee the world together.");
-                    },
-                    child: Semantics(
-                      label: "Join the community.\nSee the world together.",
-                      child: const Text(
-                        "Join the community.\nSee the world together.",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                ],
-              ),
-            ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-              child: GestureDetector(
-                onTap: () {
-                  _speak("DoubleTap if you need visual assistance");
-                },
-                onDoubleTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const HelpScreen()),
-                  );
-                
-                },
-                child: SizedBox(
-                  width: double.infinity,
-                  height: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                    ),
-                    onPressed: null, // تعطيل onPressed لأننا نستخدم GestureDetector
-                    child: const Text(
-                      "I need visual assistance",
-                      style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
-                    ),
-                  ),
+      backgroundColor: const Color(0xFF153349),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                "Welcome to Our Community",
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xffADE0EB),
                 ),
               ),
-            ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-              child: GestureDetector(
-                onTap: () {
-                  _speak("DoubleTap if you like to volunteer");
-                },
-                onDoubleTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const ProfileScreenvolunteer()),
-                  );
-                },
-                child: SizedBox(
-                  width: double.infinity,
-                  height: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                    ),
-                    onPressed: null, // تعطيل onPressed لأننا نستخدم GestureDetector
-                    child: const Text(
-                      "I'd like to volunteer",
-                      style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
-                    ),
-                  ),
+              const SizedBox(height: 16),
+              const Text(
+                "Choose how you'd like to participate",
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.white70,
                 ),
+                textAlign: TextAlign.center,
               ),
-            ),
+              const SizedBox(height: 40),
+              _buildRoleButton(
+                context: context,
+                title: "I Need Visual Assistance",
+                icon: Icons.accessibility_new,
+                description: "Get help from our volunteers",
+                role: 'visually_impaired',
+              ),
+              const SizedBox(height: 20),
+              _buildRoleButton(
+                context: context,
+                title: "I'd Like to Volunteer",
+                icon: Icons.volunteer_activism,
+                description: "Help visually impaired users",
+                role: 'volunteer',
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
+  }
+
+  Widget _buildRoleButton({
+    required BuildContext context,
+    required String title,
+    required IconData icon,
+    required String description,
+    required String role,
+  }) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      child: ElevatedButton(
+        onPressed: () => _selectRole(context, role),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.white.withOpacity(0.1),
+          padding: const EdgeInsets.all(20),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              size: 50,
+              color: const Color(0xffADE0EB),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Color(0xffADE0EB),
+              ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              description,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.white.withOpacity(0.7),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _selectRole(BuildContext context, String role) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      // Update user role in database
+      await RealtimeDatabaseService().updateUserRole(user.uid, role);
+
+      // Navigate to appropriate screen
+      if (context.mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => role == 'volunteer'
+                ? const ProfileScreenVolunteer()
+                : const HelpScreen(),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error setting role: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }

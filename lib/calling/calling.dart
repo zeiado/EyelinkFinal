@@ -1,120 +1,204 @@
+// lib/screens/video_call_screen.dart
+
 import 'package:flutter/material.dart';
-import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:agora_rtc_engine/agora_rtc_engine.dart';
+import '../services/agora_service.dart';
 
 class VideoCallScreen extends StatefulWidget {
-  const VideoCallScreen({super.key});
+  final String channelName;
+  final int uid;
+
+  const VideoCallScreen({
+    required this.channelName,
+    required this.uid,
+    super.key,
+  });
 
   @override
-  _VideoCallScreenState createState() => _VideoCallScreenState();
+  State<VideoCallScreen> createState() => _VideoCallScreenState();
 }
 
 class _VideoCallScreenState extends State<VideoCallScreen> {
-  final _localRenderer = RTCVideoRenderer();
-  final _remoteRenderer = RTCVideoRenderer();
-  MediaStream? _localStream;
+  final AgoraService _agoraService = AgoraService();
+  bool _localUserJoined = false;
+  bool _muted = false;
+  bool _videoEnabled = true;
+  bool _isInitializing = true;
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
-    _initializeCamera();
+    _initializeCall();
   }
 
-  Future<void> _initializeCamera() async {
-    await _localRenderer.initialize();
-    await _remoteRenderer.initialize();
+  Future<void> _initializeCall() async {
+    try {
+      setState(() => _isInitializing = true);
+      await _agoraService.initialize();
+      _agoraService.engine.registerEventHandler(
+        RtcEngineEventHandler(
+          onJoinChannelSuccess: (connection, elapsed) {
+            setState(() => _localUserJoined = true);
+          },
+          onUserJoined: (connection, remoteUid, elapsed) {
+            setState(() {});
+          },
+          onUserOffline: (connection, remoteUid, reason) {
+            setState(() {});
+          },
+          onError: (err, msg) {
+            _handleError('Video call error occurred');
+          },
+        ),
+      );
 
-    // فتح الكاميرا الأمامية
-    final Map<String, dynamic> mediaConstraints = {
-      'audio': true,
-      'video': {
-        'facingMode': 'user', // الكاميرا الأمامية
-        'width': 640,
-        'height': 480
-      }
-    };
+      await _agoraService.joinChannel(widget.channelName, widget.uid);
+      setState(() => _isInitializing = false);
+    } catch (e) {
+      _handleError('Failed to initialize video call');
+    }
+  }
 
-    MediaStream stream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
+  void _handleError(String message) {
     setState(() {
-      _localStream = stream;
-      _localRenderer.srcObject = stream;
+      _errorMessage = message;
+      _isInitializing = false;
     });
-
-    // في التطبيق الفعلي، يجب إضافة WebRTC signaling هنا
-  }
-
-  @override
-  void dispose() {
-    _localRenderer.dispose();
-    _remoteRenderer.dispose();
-    _localStream?.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isInitializing) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+    
+    if (_errorMessage != null) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(_errorMessage!),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Return'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    
     return Scaffold(
-      backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // عرض بث الفيديو الخاص بالمستخدم الآخر
-          SizedBox(
-            width: double.infinity,
-            height: double.infinity,
-            child: RTCVideoView(_remoteRenderer),
-            ),
-
-          Positioned(
-            bottom: 20,
-            right: 20,
-            child: Container(
-              width: 100,
-              height: 120,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.blue, width: 2),
-              ),
-              child: RTCVideoView(_localRenderer, mirror: true),
-            ),
-          ),
-
-          // شريط التحكم السفلي
-          Positioned(
-            bottom: 20,
-            left: 20,
-            right: 20,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                FloatingActionButton(
-                  onPressed: () {
-                    // كتم الصوت
-                    _localStream?.getAudioTracks().first.enabled = 
-                        !_localStream!.getAudioTracks().first.enabled;
-                  },
-                  backgroundColor: Colors.grey,
-                  child: const Icon(Icons.mic_off, color: Colors.white),
-                ),
-                FloatingActionButton(
-                  onPressed: () {
-                    // إنهاء المكالمة
-                    Navigator.pop(context);
-                  },
-                  backgroundColor: Colors.red,
-                  child: const Icon(Icons.call_end, color: Colors.white),
-                ),
-                FloatingActionButton(
-                  onPressed: () async {
-                    // تبديل الكاميرا
-                    await _localStream?.getVideoTracks().first.switchCamera();
-                  },
-                  backgroundColor: Colors.blue,
-                  child: const Icon(Icons.switch_camera, color: Colors.white),
-                ),
-              ],
-            ),
-          ),
+          _buildVideoViews(),
+          _buildControls(),
         ],
       ),
     );
+  }
+
+  Widget _buildVideoViews() {
+    return Stack(
+      children: [
+        AgoraVideoView(
+          controller: VideoViewController.remote(
+            rtcEngine: _agoraService.engine,
+            canvas: const VideoCanvas(uid: 0),
+            connection: RtcConnection(channelId: widget.channelName),
+          ),
+        ),
+        Align(
+          alignment: Alignment.topRight,
+          child: Container(
+            width: 120,
+            height: 160,
+            margin: const EdgeInsets.all(16),
+            child: AgoraVideoView(
+              controller: VideoViewController(
+                rtcEngine: _agoraService.engine,
+                canvas: const VideoCanvas(uid: 0),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildControls() {
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 48),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            RawMaterialButton(
+              onPressed: _onToggleMute,
+              shape: const CircleBorder(),
+              padding: const EdgeInsets.all(12),
+              fillColor: _muted ? Colors.red : Colors.white,
+              child: Icon(
+                _muted ? Icons.mic_off : Icons.mic,
+                color: _muted ? Colors.white : Colors.black,
+                size: 20,
+              ),
+            ),
+            RawMaterialButton(
+              onPressed: () => _onCallEnd(context),
+              shape: const CircleBorder(),
+              padding: const EdgeInsets.all(15),
+              fillColor: Colors.red,
+              child: const Icon(
+                Icons.call_end,
+                color: Colors.white,
+                size: 35,
+              ),
+            ),
+            RawMaterialButton(
+              onPressed: _onToggleVideo,
+              shape: const CircleBorder(),
+              padding: const EdgeInsets.all(12),
+              fillColor: _videoEnabled ? Colors.white : Colors.red,
+              child: Icon(
+                _videoEnabled ? Icons.videocam : Icons.videocam_off,
+                color: _videoEnabled ? Colors.black : Colors.white,
+                size: 20,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _onToggleMute() {
+    setState(() {
+      _muted = !_muted;
+    });
+    _agoraService.engine.muteLocalAudioStream(_muted);
+  }
+
+  void _onToggleVideo() {
+    setState(() {
+      _videoEnabled = !_videoEnabled;
+    });
+    _agoraService.engine.muteLocalVideoStream(!_videoEnabled);
+  }
+
+  void _onCallEnd(BuildContext context) {
+    _agoraService.leaveChannel();
+    Navigator.pop(context);
+  }
+
+  @override
+  void dispose() {
+    _agoraService.dispose();
+    super.dispose();
   }
 }
